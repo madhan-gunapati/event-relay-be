@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  eventType   String
+  payload     Json
+  status      String   @default("PENDING")
+  deliveries  Delivery[]
+  createdAt   DateTime @default(now())
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  clientName  String
+  eventType   String
+  targetUrl   String
+  secret      String
+  isActive    Boolean  @default(true)
+  deliveries  Delivery[]
+  createdAt   DateTime @default(now())
+}
+
+model Delivery {
+  id              String   @id @default(cuid())
+  eventId         String
+  subscriptionId  String
+  status          String   @default("QUEUED")
+  attempts        Int      @default(0)
+  responseCode    Int?
+  responseBody    String?
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  event           Event        @relation(fields: [eventId], references: [id])
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id])
+}
+
